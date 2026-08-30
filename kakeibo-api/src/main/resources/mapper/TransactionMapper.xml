@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.github.KeKe_ui_is.kakeibo_api.repository.TransactionRepository">
+
+    <sql id="transactionColumns">
+        t.id,
+        t.user_id,
+        t.category_id,
+        c.name AS category_name,
+        c.transaction_type,
+        t.amount,
+        t.transaction_date,
+        t.expense_type,
+        t.memo,
+        t.created_at,
+        t.updated_at
+    </sql>
+
+    <!-- 一覧取得 -->
+    <select id="findAllByUserId"
+            resultType="io.github.KeKe_ui_is.kakeibo_api.dto.response.TransactionResponse">
+
+        SELECT
+        <include refid="transactionColumns"/>
+        FROM transactions AS t
+        INNER JOIN categories AS c
+        ON c.id = t.category_id
+        AND c.user_id = t.user_id
+        WHERE t.user_id = #{userId}
+        ORDER BY t.transaction_date DESC, t.id DESC
+
+    </select>
+
+    <!-- 1件取得 -->
+    <select id="findByIdAndUserId"
+            resultType="io.github.KeKe_ui_is.kakeibo_api.dto.response.TransactionResponse">
+
+        SELECT
+        <include refid="transactionColumns"/>
+        FROM transactions AS t
+        INNER JOIN categories AS c
+        ON c.id = t.category_id
+        AND c.user_id = t.user_id
+        WHERE t.id = #{id}
+        AND t.user_id = #{userId}
+
+    </select>
+<!--TransactionServiceにある53行目からのfindCategoryTypeByIdAndUserIdはカテゴリーテーブルから取得しているのでのちにCategoryRepositoryに処理を移す-->
+    <!-- カテゴリーの収入・支出区分を取得 -->
+    <select id="findCategoryTypeByIdAndUserId"
+            resultType="io.github.KeKe_ui_is.kakeibo_api.model.TransactionType">
+
+        SELECT transaction_type
+        FROM categories
+        WHERE id = #{categoryId}
+        AND user_id = #{userId}
+        AND is_active = TRUE
+
+    </select>
+
+    <!-- 登録 -->
+    <insert id="insert"
+            parameterType="io.github.KeKe_ui_is.kakeibo_api.model.Transaction"
+            useGeneratedKeys="true"
+            keyProperty="id">
+
+        INSERT INTO transactions (
+        user_id,
+        category_id,
+        amount,
+        transaction_date,
+        expense_type,
+        memo
+        )
+        VALUES (
+        #{userId},
+        #{categoryId},
+        #{amount},
+        #{transactionDate},
+        #{expenseType, jdbcType=VARCHAR},
+        #{memo, jdbcType=VARCHAR}
+        )
+
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update"
+            parameterType="io.github.KeKe_ui_is.kakeibo_api.model.Transaction">
+
+        UPDATE transactions
+        SET
+        category_id = #{categoryId},
+        amount = #{amount},
+        expense_type = #{expenseType, jdbcType=VARCHAR},
+        memo = #{memo, jdbcType=VARCHAR}
+        WHERE id = #{id}
+        AND user_id = #{userId}
+
+    </update>
+
+    <!-- 削除 -->
+    <delete id="deleteByIdAndUserId">
+
+        DELETE FROM transactions
+        WHERE id = #{id}
+        AND user_id = #{userId}
+
+    </delete>
+
+</mapper>
