@@ -1,6 +1,7 @@
 package io.github.KeKe_ui_is.kakeibo_api.config;
 
 import io.github.KeKe_ui_is.kakeibo_api.mapper.DatabaseConnectionMapper;
+import io.github.KeKe_ui_is.kakeibo_api.model.Category;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
