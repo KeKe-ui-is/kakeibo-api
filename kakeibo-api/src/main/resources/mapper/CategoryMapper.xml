@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.github.KeKe_ui_is.kakeibo_api.repository.CategoryRepository">
+
+    <resultMap id="categoryResponseMap"
+               type="io.github.KeKe_ui_is.kakeibo_api.dto.response.CategoryResponse">
+
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="transaction_type" property="transactionType"/>
+        <result column="display_order" property="displayOrder"/>
+        <result column="is_active" property="active"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="categoryColumns">
+        id,
+        user_id,
+        name,
+        transaction_type,
+        display_order,
+        is_active,
+        created_at,
+        updated_at
+    </sql>
+
+    <select id="findAllByUserId"
+            resultMap="categoryResponseMap">
+        SELECT
+        <include refid="categoryColumns"/>
+        FROM categories
+        WHERE user_id = #{userId}
+        ORDER BY
+        CASE transaction_type
+        WHEN 'INCOME' THEN 1
+        ELSE 2
+        END,
+        display_order,
+        id
+    </select>
+
+    <select id="findActiveByUserId"
+            resultMap="categoryResponseMap">
+        SELECT
+        <include refid="categoryColumns"/>
+        FROM categories
+        WHERE user_id = #{userId}
+        AND is_active = TRUE
+        ORDER BY
+        CASE transaction_type
+        WHEN 'INCOME' THEN 1
+        ELSE 2
+        END,
+        display_order,
+        id
+    </select>
+
+    <select id="findByIdAndUserId"
+            resultMap="categoryResponseMap">
+        SELECT
+        <include refid="categoryColumns"/>
+        FROM categories
+        WHERE id = #{categoryId}
+        AND user_id = #{userId}
+    </select>
+
+    <select id="countByNameAndType"
+            resultType="int">
+        SELECT COUNT(*)
+        FROM categories
+        WHERE user_id = #{userId}
+        AND name = #{name}
+        AND transaction_type =
+        #{transactionType, jdbcType=VARCHAR}
+    </select>
+
+    <select id="countByNameAndTypeExcludingId"
+            resultType="int">
+        SELECT COUNT(*)
+        FROM categories
+        WHERE user_id = #{userId}
+        AND name = #{name}
+        AND transaction_type =
+        #{transactionType, jdbcType=VARCHAR}
+        AND id != #{categoryId}
+    </select>
+
+    <insert id="insert"
+            parameterType="io.github.KeKe_ui_is.kakeibo_api.model.Category"
+            useGeneratedKeys="true"
+            keyProperty="id">
+
+        INSERT INTO categories (
+        user_id,
+        name,
+        transaction_type,
+        display_order
+        )
+        VALUES (
+        #{userId},
+        #{name},
+        #{transactionType, jdbcType=VARCHAR},
+        #{displayOrder}
+        )
+    </insert>
+
+    <update id="update"
+            parameterType="io.github.KeKe_ui_is.kakeibo_api.model.Category">
+
+        UPDATE categories
+        SET
+        name = #{name},
+        display_order = #{displayOrder}
+        WHERE id = #{id}
+        AND user_id = #{userId}
+    </update>
+
+    <update id="updateActive">
+        UPDATE categories
+        SET is_active = #{active}
+        WHERE id = #{categoryId}
+        AND user_id = #{userId}
+    </update>
+
+    <select id="countTransactions"
+            resultType="int">
+        SELECT COUNT(*)
+        FROM transactions
+        WHERE category_id = #{categoryId}
+        AND user_id = #{userId}
+    </select>
+
+    <delete id="deleteByIdAndUserId">
+        DELETE FROM categories
+        WHERE id = #{categoryId}
+        AND user_id = #{userId}
+    </delete>
+
+</mapper>
