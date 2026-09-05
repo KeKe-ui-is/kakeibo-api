@@ -4,9 +4,11 @@ import io.github.KeKe_ui_is.kakeibo_api.dto.request.TransactionRequest;
 import io.github.KeKe_ui_is.kakeibo_api.dto.response.TransactionResponse;
 import io.github.KeKe_ui_is.kakeibo_api.service.TransactionService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.YearMonth;
 import java.util.List;
 
 @RestController
@@ -29,6 +31,21 @@ public class TransactionController {
     @GetMapping("find/{transactionId}")
     public TransactionResponse findById(@PathVariable Long transactionId) {
         return transactionService.findById(DEVELOPMENT_USER_ID, transactionId);
+    }
+
+    /**
+     * 指定された年月の収支明細を取得します。
+     *
+     * @param yearMonth 検索対象の年月（例：2026-09）
+     * @return 対象月の収支一覧
+     */
+    @GetMapping("/findByMonth")
+    public List<TransactionResponse> findByMonth(@RequestParam("yearMonth") @DateTimeFormat(pattern = "uuuu-MM") YearMonth yearMonth) {
+
+        return transactionService.findByMonth(
+                DEVELOPMENT_USER_ID,
+                yearMonth
+        );
     }
 
     @PostMapping("register")

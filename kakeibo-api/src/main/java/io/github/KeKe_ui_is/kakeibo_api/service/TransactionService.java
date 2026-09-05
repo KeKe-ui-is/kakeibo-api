@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -53,6 +55,22 @@ public class TransactionService {
         }
 
         return transaction;
+    }
+
+    /**
+     * 指定されたユーザーの1か月分の収支明細を取得します。
+     *
+     * @param userId    ユーザーID
+     * @param yearMonth 検索対象の年月
+     * @return 対象月の収支一覧。該当データがない場合は空の一覧
+     */
+    public List<TransactionResponse> findByMonth(Long userId, YearMonth yearMonth) {
+
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.plusMonths(1).atDay(1);
+
+        return transactionRepository.findByUserIdAndPeriod(userId, startDate, endDate
+        );
     }
 
     /**
