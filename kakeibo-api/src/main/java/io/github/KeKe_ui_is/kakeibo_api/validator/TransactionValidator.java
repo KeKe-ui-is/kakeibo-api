@@ -26,37 +26,21 @@ public class TransactionValidator {
      * @param userId  ユーザーID
      * @param request 収支の入力内容
      */
-    public void validateCategoryAndExpenseType(
-            Long userId,
-            TransactionRequest request) {
+    public void validateCategoryAndExpenseType(Long userId, TransactionRequest request) {
 
-        TransactionType transactionType =
-                transactionRepository
-                        .findCategoryTypeByIdAndUserId(
-                                request.getCategoryId(),
-                                userId
-                        );
+        TransactionType transactionType = transactionRepository.findCategoryTypeByIdAndUserId(request.getCategoryId(), userId);
 
         if (transactionType == null) {
-            throw new InvalidRequestException(
-                    "指定された有効なカテゴリが見つかりません"
-            );
+            throw new InvalidRequestException("指定された有効なカテゴリが見つかりません");
         }
 
-        if (transactionType == TransactionType.INCOME
-                && request.getExpenseType() != null) {
-
-            throw new InvalidRequestException(
-                    "収入カテゴリでは固定費・変動費区分を指定できません"
-            );
+        if (transactionType == TransactionType.INCOME && request.getExpenseType() != null) {
+            throw new InvalidRequestException("収入カテゴリでは固定費・変動費区分を指定できません");
         }
 
-        if (transactionType == TransactionType.EXPENSE
-                && request.getExpenseType() == null) {
+        if (transactionType == TransactionType.EXPENSE && request.getExpenseType() == null) {
 
-            throw new InvalidRequestException(
-                    "支出カテゴリでは固定費・変動費区分が必要です"
-            );
+            throw new InvalidRequestException("支出カテゴリでは固定費・変動費区分が必要です");
         }
     }
 }

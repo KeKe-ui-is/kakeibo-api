@@ -36,26 +36,13 @@ public class CategoryValidator {
         int count;
 
         if (excludedCategoryId == null) {
-            count = categoryRepository.countByNameAndType(
-                    userId,
-                    name,
-                    transactionType
-            );
+            count = categoryRepository.countByNameAndType(userId, name, transactionType);
         } else {
-            count =
-                    categoryRepository
-                            .countByNameAndTypeExcludingId(
-                                    userId,
-                                    name,
-                                    transactionType,
-                                    excludedCategoryId
-                            );
+            count = categoryRepository.countByNameAndTypeExcludingId(userId, name, transactionType, excludedCategoryId);
         }
 
         if (count > 0) {
-            throw new ConflictException(
-                    "同じ名前と収支区分のカテゴリがすでに存在します"
-            );
+            throw new ConflictException("同じ名前と収支区分のカテゴリがすでに存在します");
         }
     }
 
@@ -65,21 +52,11 @@ public class CategoryValidator {
      * @param userId     ユーザーID
      * @param categoryId カテゴリID
      */
-    public void validateDeletable(
-            Long userId,
-            Long categoryId) {
-
-        int transactionCount =
-                categoryRepository.countTransactions(
-                        categoryId,
-                        userId
-                );
+    public void validateDeletable(Long userId, Long categoryId) {
+        int transactionCount = categoryRepository.countTransactions(categoryId, userId);
 
         if (transactionCount > 0) {
-            throw new ConflictException(
-                    "収支で使用されているカテゴリは削除できません。"
-                            + "無効化してください"
-            );
+            throw new ConflictException("収支で使用されているカテゴリは削除できません。" + "無効化してください");
         }
     }
 }
