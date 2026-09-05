@@ -3,9 +3,11 @@ package io.github.KeKe_ui_is.kakeibo_api.service;
 import io.github.KeKe_ui_is.kakeibo_api.dto.request.CategoryCreateRequest;
 import io.github.KeKe_ui_is.kakeibo_api.dto.request.CategoryUpdateRequest;
 import io.github.KeKe_ui_is.kakeibo_api.dto.response.CategoryResponse;
+import io.github.KeKe_ui_is.kakeibo_api.exception.ResourceNotFoundException;
 import io.github.KeKe_ui_is.kakeibo_api.model.Category;
 import io.github.KeKe_ui_is.kakeibo_api.model.TransactionType;
 import io.github.KeKe_ui_is.kakeibo_api.repository.CategoryRepository;
+import io.github.KeKe_ui_is.kakeibo_api.validator.CategoryValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,14 +25,16 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final CategoryValidator categoryValidator;
 
     /**
      * CategoryServiceを生成します。
      *
      * @param categoryRepository カテゴリテーブルを操作するRepository
      */
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, CategoryValidator categoryValidator) {
         this.categoryRepository = categoryRepository;
+        this.categoryValidator = categoryValidator;
     }
 
     /**
@@ -67,10 +71,7 @@ public class CategoryService {
         CategoryResponse category = categoryRepository.findByIdAndUserId(categoryId, userId);
 
         if (category == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "カテゴリが見つかりません"
-            );
+            throw new ResourceNotFoundException("カテゴリが見つかりません");
         }
         return category;
     }
@@ -90,8 +91,7 @@ public class CategoryService {
     @Transactional
     public CategoryResponse create(Long userId, CategoryCreateRequest request) {
         String name = request.getName().strip();
-
-        validateDuplicate(userId, name, request.getTransactionType(), null);
+        categoryValidator.validateDuplicate(userId, name, request.getTransactionType(), null);
 
         Category category = new Category();
         category.setUserId(userId);
@@ -124,7 +124,7 @@ public class CategoryService {
         CategoryResponse existing = findById(userId, categoryId);
 
         String name = request.getName().strip();
-        validateDuplicate(userId, name, existing.getTransactionType(), categoryId);
+        categoryValidator.validateDuplicate(userId, name, existing.getTransactionType(), categoryId);
 
         Category category = new Category();
         category.setId(categoryId);
@@ -194,50 +194,9 @@ public class CategoryService {
 
         findById(userId, categoryId);
 
-        int transactionCount = categoryRepository.countTransactions(categoryId, userId);
+        categoryValidator.validateDeletable(userId, categoryId);
 
-        if (transactionCount > 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "収支で使用されているカテゴリは削除できません。"
-                            + "無効化してください"
-            );
-        }
-
-        categoryRepository.deleteByIdAndUserId(categoryId, userId
-        );
+        categoryRepository.deleteByIdAndUserId(categoryId, userId);
     }
 
-    /**
-     * 同じユーザー、カテゴリ名、収支区分を持つカテゴリが
-     * 存在しないことを確認します。
-     *
-     * 登録時はすべてのカテゴリを対象に重複確認を行います。
-     * 更新時は更新対象のカテゴリIDを除外して確認します。
-     * 無効化されているカテゴリも重複確認の対象に含みます。
-     *
-     * @param userId             ユーザーID
-     * @param name               カテゴリ名
-     * @param transactionType    収入・支出区分
-     * @param excludedCategoryId 重複確認から除外するカテゴリID。
-     *                           登録時はnull
-     * @throws ResponseStatusException 重複するカテゴリが存在する場合
-     */
-    private void validateDuplicate(Long userId, String name, TransactionType transactionType, Long excludedCategoryId) {
-
-        int count;
-
-        if (excludedCategoryId == null) {
-            count = categoryRepository.countByNameAndType(userId, name, transactionType);
-        } else {
-            count = categoryRepository.countByNameAndTypeExcludingId(userId, name, transactionType, excludedCategoryId);
-        }
-
-        if (count > 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "同じ名前と収支区分のカテゴリがすでに存在します"
-            );
-        }
-    }
 }
