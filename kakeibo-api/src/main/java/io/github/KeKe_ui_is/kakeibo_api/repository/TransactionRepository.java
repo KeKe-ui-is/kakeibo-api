@@ -7,6 +7,7 @@ import io.github.KeKe_ui_is.kakeibo_api.model.TransactionType;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
@@ -57,5 +58,19 @@ public interface TransactionRepository {
     int deleteByIdAndUserId(
             @Param("id") Long id,
             @Param("userId") Long userId
+    );
+
+    /**
+     * 指定されたユーザーの収支を期間で検索します。
+     *
+     * @param userId    ユーザーID
+     * @param startDate 検索開始日（この日を含む）
+     * @param endDate   検索終了日（この日を含まない）
+     * @return 条件に一致する収支一覧。該当データがない場合は空の一覧
+     */
+    List<TransactionResponse> findByUserIdAndPeriod(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
     );
 }

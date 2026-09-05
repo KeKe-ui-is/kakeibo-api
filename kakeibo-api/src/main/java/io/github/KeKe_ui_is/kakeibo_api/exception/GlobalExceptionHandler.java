@@ -7,8 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -134,6 +136,26 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(
                 status,
                 message,
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    /**
+     * 検索パラメータの不足や型変換エラーを処理します。
+     */
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class
+    })
+    public ResponseEntity<ErrorResponse> handleInvalidParameter(
+            Exception exception,
+            HttpServletRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "必須パラメータが不足しているか、形式が正しくありません。"
+                        + "yearMonthは2026-09の形式で指定してください",
                 request.getRequestURI(),
                 null
         );
