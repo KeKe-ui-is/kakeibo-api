@@ -5,7 +5,9 @@ import io.github.KeKe_ui_is.kakeibo_api.dto.response.TransactionResponse;
 import io.github.KeKe_ui_is.kakeibo_api.model.ExpenseType;
 import io.github.KeKe_ui_is.kakeibo_api.model.Transaction;
 import io.github.KeKe_ui_is.kakeibo_api.model.TransactionType;
+import io.github.KeKe_ui_is.kakeibo_api.repository.CategoryRepository;
 import io.github.KeKe_ui_is.kakeibo_api.repository.TransactionRepository;
+import io.github.KeKe_ui_is.kakeibo_api.validator.TransactionValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,10 +19,11 @@ import java.util.List;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final TransactionValidator transactionValidator;
 
-    public TransactionService(TransactionRepository transactionRepository
-    ) {
+    public TransactionService(TransactionRepository transactionRepository, TransactionValidator transactionValidator) {
         this.transactionRepository = transactionRepository;
+        this.transactionValidator = transactionValidator;
     }
 
     /**
@@ -60,7 +63,7 @@ public class TransactionService {
      */
     @Transactional
     public TransactionResponse create(Long userId, TransactionRequest request) {
-        validateCategoryAndExpenseType(userId, request);
+        transactionValidator.validateCategoryAndExpenseType(userId, request);
 
         Transaction transaction = toTransaction(null, userId, request);
 
@@ -73,8 +76,7 @@ public class TransactionService {
     public TransactionResponse update(Long userId, Long id, TransactionRequest request) {
         // 対象が存在し、本人のデータであることを確認
         findById(userId, id);
-
-        validateCategoryAndExpenseType(userId, request);
+        transactionValidator.validateCategoryAndExpenseType(userId, request);
 
         Transaction transaction = toTransaction(id, userId, request);
 
@@ -116,33 +118,5 @@ public class TransactionService {
         return transaction;
     }
 
-    private void validateCategoryAndExpenseType(Long userId, TransactionRequest request) {
 
-        TransactionType categoryType = transactionRepository.findCategoryTypeByIdAndUserId(request.getCategoryId(), userId);
-
-        if (categoryType == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "カテゴリーが存在しないか、使用できません"
-            );
-        }
-
-        ExpenseType expenseType = request.getExpenseType();
-
-        if (categoryType == TransactionType.INCOME
-                && expenseType != null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "収入には固定費・変動費区分を指定できません"
-            );
-        }
-
-        if (categoryType == TransactionType.EXPENSE
-                && expenseType == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "支出には固定費・変動費区分が必要です"
-            );
-        }
-    }
 }
