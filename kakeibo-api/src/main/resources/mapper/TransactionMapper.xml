@@ -95,6 +95,7 @@
         SET
         category_id = #{categoryId},
         amount = #{amount},
+        transaction_date = #{transactionDate},
         expense_type = #{expenseType, jdbcType=VARCHAR},
         memo = #{memo, jdbcType=VARCHAR}
         WHERE id = #{id}
@@ -116,17 +117,7 @@
             resultType="io.github.KeKe_ui_is.kakeibo_api.dto.response.TransactionResponse">
 
         SELECT
-        t.id,
-        t.user_id,
-        t.category_id,
-        c.name AS category_name,
-        c.transaction_type,
-        t.amount,
-        t.transaction_date,
-        t.expense_type,
-        t.memo,
-        t.created_at,
-        t.updated_at
+        <include refid="transactionColumns"/>
         FROM transactions AS t
         INNER JOIN categories AS c
         ON c.id = t.category_id
